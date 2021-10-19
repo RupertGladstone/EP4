@@ -12,10 +12,8 @@ from paraview.simple import *
 #### disable automatic camera reset on 'Show'
 paraview.simple._DisableFirstRenderCameraReset()
 
-#inputDataset.PointArrayStatus = ['smbref', 'bmb', 'deltat_basin', 't_forcing', 'bed', 'fs lower', 'fs upper', 'thickness', 'depth', 'height', 'groundedmask', 'beta', 'vaf', 'haf', 'velocity', 'gm']
-    
-def PlotLSfield(EP4_params):
-    "A standard plot from a pvtu file showing a lower surface field variable with grounding line and upper surface velocity contours"
+def EP4_plot(EP4_params):
+    "A standard plot from a pvtu file showing a lower or upper surface field variable, or difference between two variables, with grounding line and upper surface velocity contours"
     
     # create a new 'XML Partitioned Unstructured Grid Reader'
     inputDataset = XMLPartitionedUnstructuredGridReader(FileName=EP4_params['inputfname'])
@@ -33,11 +31,28 @@ def PlotLSfield(EP4_params):
 
     [lowerSurface,lowerSurfaceDisplay] = extractSurface(EP4_params,inputDataset,renderView1,'lower')
     [upperSurface,upperSurfaceDisplay] = extractSurface(EP4_params,inputDataset,renderView1,'upper')
-    [fieldvarLUTColorBar, fieldvarLUT, fieldvarPWF] = plotField(EP4_params,renderView1)
+
+    if (EP4_params['surface']=='lower'):
+        [fieldvarLUTColorBar, fieldvarLUT, fieldvarPWF] = plotField(EP4_params,renderView1,lowerSurfaceDisplay)
+        Hide(upperSurface, renderView1)
+    elif (EP4_params['surface']=='upper'):
+        [fieldvarLUTColorBar, fieldvarLUT, fieldvarPWF] = plotField(EP4_params,renderView1,upperSurfaceDisplay)
+        Hide(lowerSurface, renderView1)
+    else:
+        sys.exit("ERROR in extractSurface: surface should be lower or upper")
+
+    contour1Display = addGL(EP4_params, lowerSurface, renderView1)    
     calculator1 = velocityMagnitude(upperSurface)
     Hide(calculator1, renderView1)
-    contour1Display = addGL(EP4_params, lowerSurface, renderView1)    
-    contour2Display =  addVelContours(EP4_params, calculator1, renderView1)    
+    contour2Display = addVelContours(EP4_params, calculator1, renderView1)    
+
+#    Hide(lowerSurface, renderView1)
+#    Hide(upperSurface, renderView1)
+#    Hide(lowerSurfaceDisplay, renderView1)
+#    Hide(upperSurfaceDisplay, renderView1)
+
+#    ColorBy(upperSurface, ('POINTS', EP4_params['fieldvar']))
+
     
     # current camera placement for renderView1
     renderView1.CameraPosition = [EP4_params['camerax'], EP4_params['cameray'], EP4_params['cameraHeight']]
@@ -269,8 +284,17 @@ def addVelContours(EP4_params,calculator1,renderView1):
 
 
 
-def plotField(EP4_params,renderView1):
+def plotField(EP4_params,renderView1,plottingSurface):
     "Add a field variable to the current view"
+    
+    # set scalar coloring
+    ColorBy(plottingSurface, ('POINTS', EP4_params['fieldvar']))
+    
+    # rescale color and/or opacity maps used to include current data range
+    plottingSurface.RescaleTransferFunctionToDataRange(True, False)
+    
+    # show color bar/color legend
+    plottingSurface.SetScalarBarVisibility(renderView1, True)
     
     # get color transfer function/color map for 'fieldvar'
     fieldvarLUT = GetColorTransferFunction(EP4_params['fieldvar'])
@@ -294,4 +318,12 @@ def plotField(EP4_params,renderView1):
     fieldvarLUTColorBar.TitleColor = [0.0, 0.0, 0.0]
     fieldvarLUTColorBar.LabelColor = [0.0, 0.0, 0.0]
 
+    # Hide the scalar bar for this color map if no visible data is colored by it.
+    HideScalarBarIfNotNeeded(fieldvarLUT, renderView1)
+    
+    # User defined value range
+    if 'fieldrange' in EP4_params.keys():
+        fieldvarLUT.RescaleTransferFunction(EP4_params['fieldrange'])
+        fieldvarPWF.RescaleTransferFunction(EP4_params['fieldrange'])
+        
     return [fieldvarLUTColorBar, fieldvarLUT, fieldvarPWF]

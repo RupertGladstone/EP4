@@ -1,8 +1,11 @@
 
 EP4_params = {
+    'mode':'singlefield',
+    'surface':'lower',
     'fieldvars' : ['depth', 'groundedmask', 'velocity'],
     'fieldvar' : 'depth',
     'fieldvarLabel' : 'Depth, $m$',
+    'fieldrange' : [-1000.0, 1000.0],
     'cameraHeight' : 500000.0,
     'camerax' : -1585790.0,
     'cameray' : -231939.0,
