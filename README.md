@@ -35,3 +35,66 @@ Edit the parameters in EP4_myPlots.py according to needs then run:
 
 pvpython EP4_myPlots.py
 
+
+
+## Parameter choices
+
+The python dictionary containing parameters defines what should be plotted and certain properties of the plot.  The following parameters may be used.
+
+#### 'mode' :
+
+Plotting mode.  Options are 'singlefield' or 'difference plot' (NYI)
+
+#### 'surface' :
+
+On which surface to plot he main field variable, 'upper' or 'lower'
+
+####    'fieldvars' :
+
+Which field variables need to be loaded to make the plot.  In list form.  e.g. ['depth', 'groundedmask', 'velocity'],
+
+#### 'fieldvar' :
+
+The main field variable to be plotted in colour.  e.g. 'depth'
+
+#### 'fieldvarLabel' : 
+
+This is used as a name label on the colorbar.  tex may be used.  e.g. 'Depth, $m$'
+
+#### 'fieldrange' : 
+
+If this is given it defines the upper and lower limit for the colourbar values for the main field variable.  If not given the max and min values will be used. It should be alength 2 list. e.g. [-1000.0, 1000.0]
+
+#### 'cameraHeight' : 
+
+Height above zero at which the camera is positioned.  Reduce for more zoom in.  e.g. 500000.0
+
+#### 'camerax' and 'cameray' : 
+
+x and y locations for the centre of the plot, i.e. the point at which the camera points at (the camera points straight down).
+
+#### 'xres' and 'yres' : 
+
+x and y resolution of the output plot.
+
+#### 'LSgeomID' and 'USgeomID' : 
+
+Geometry IDs for the upper and lower surfaces as labelled in the pvtu files.
+
+#### 'imgname' :
+
+Output filename for completed plot.  Fulll path.
+
+#### 'inputfname' : 
+
+Input file name.  Full path.
+
+#### 'velocityContours' : 
+
+List of values for velocity contours.  e.g. [100.0, 1000.0],
+
+#### 'fontSize' : 
+
+Font size used in colour bar labelling.
+
+
