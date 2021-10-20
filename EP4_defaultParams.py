@@ -13,8 +13,10 @@ EP4_params = {
     'yres' : 800,
     'LSgeomID' : 103,
     'USgeomID' : 104,
-    'imgname' : '/media/sf_VBshare/PIGbed.png',
-    'inputfname' : '/media/sf_VBshare/PIG8/8b/geomtrans_s8b_r2_t0006.pvtu',
+    'imgname' : './PIGtst.png',
+    'inputfname' : '/scratch/project_2000339/gladston/PIG_S8/vtuoutputs/geomtrans_s8_t0001.pvtu',
+    'inputfname2' : '/scratch/project_2000339/gladston/PIG_S8/vtuoutputs/geomtrans_s8_t0002.pvtu',
+    'dt' : 0.05,
     'velocityContours' : [100.0, 1000.0],
     'fontSize' : 15
 }
