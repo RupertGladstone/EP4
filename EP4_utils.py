@@ -32,14 +32,35 @@ def EP4_plot(EP4_params):
     [lowerSurface,lowerSurfaceDisplay] = extractSurface(EP4_params,inputDataset,renderView1,'lower')
     [upperSurface,upperSurfaceDisplay] = extractSurface(EP4_params,inputDataset,renderView1,'upper')
 
-    if (EP4_params['surface']=='lower'):
-        [fieldvarLUTColorBar, fieldvarLUT, fieldvarPWF] = plotField(EP4_params,renderView1,lowerSurfaceDisplay)
-        Hide(upperSurface, renderView1)
-    elif (EP4_params['surface']=='upper'):
-        [fieldvarLUTColorBar, fieldvarLUT, fieldvarPWF] = plotField(EP4_params,renderView1,upperSurfaceDisplay)
+    if (EP4_params['mode']=='difference'):
+        # Difference plot.  Need a second input data set.
+        inputDataset2 = XMLPartitionedUnstructuredGridReader(FileName=EP4_params['inputfname2'])
+        inputDataset2.CellArrayStatus = ['GeometryIds']
+        inputDataset2.PointArrayStatus = EP4_params['fieldvars']
+        # hide all surfaces for now, we'll create an appended (merged) dataset for plotting.
         Hide(lowerSurface, renderView1)
+        Hide(upperSurface, renderView1)
+        if (EP4_params['surface']=='lower'):
+            [lowerSurface2,lowerSurface2Display] = extractSurface(EP4_params,inputDataset2,renderView1,'lower')
+            Hide(lowerSurface2, renderView1)
+            appendAttributes1 = AppendAttributes(Input=[lowerSurface, lowerSurface2])
+        elif (EP4_params['surface']=='upper'):
+            [upperSurface2,upperSurface2Display] = extractSurface(EP4_params,inputDataset2,renderView1,'upper')
+            Hide(upperSurface2, renderView1)
+            appendAttributes1 = AppendAttributes(Input=[upperSurface, upperSurface2])
+
+        [changeData, changeDataDisplay] = calcChange(EP4_params,appendAttributes1,renderView1)
+
+            
     else:
-        sys.exit("ERROR in extractSurface: surface should be lower or upper")
+        if (EP4_params['surface']=='lower'):
+            [fieldvarLUTColorBar, fieldvarLUT, fieldvarPWF] = plotField(EP4_params,renderView1,lowerSurfaceDisplay)
+            Hide(upperSurface, renderView1)
+        elif (EP4_params['surface']=='upper'):
+            [fieldvarLUTColorBar, fieldvarLUT, fieldvarPWF] = plotField(EP4_params,renderView1,upperSurfaceDisplay)
+            Hide(lowerSurface, renderView1)
+        else:
+            sys.exit("ERROR in extractSurface: surface should be lower or upper")
 
     contour1Display = addGL(EP4_params, lowerSurface, renderView1)    
     calculator1 = velocityMagnitude(upperSurface)
@@ -217,6 +238,85 @@ def velocityMagnitude(upperSurface):
     return calculator1
 
 
+def calcChange(EP4_params,appendAttributes1,renderView1):
+    "Use calculator filter to get the magnitude of the velocity vector"
+
+    # create a new 'Calculator'
+    calculator2 = Calculator(Input=appendAttributes1)
+    calculator2.ResultArrayName = EP4_params['fieldvarLabel']
+    calculator2.Function = '('+EP4_params['fieldvar']+'_input_1 - '+EP4_params['fieldvar']+')/'+EP4_params['dt']
+
+#    calculator2.Function = 'fs lower - fs lower_input_1'
+
+    calculator2Display = Show(calculator2, renderView1)
+
+    # get color transfer function/color map
+    resultLUT = GetColorTransferFunction('turnips')
+
+    # get opacity transfer function/opacity map
+    resultPWF = GetOpacityTransferFunction('turnips')
+
+    # trace defaults for the display properties.
+    calculator2Display.Representation = 'Surface'
+    calculator2Display.ColorArrayName = ['POINTS', EP4_params['fieldvarLabel']]
+    calculator2Display.LookupTable = resultLUT
+    calculator2Display.OSPRayScaleArray = EP4_params['fieldvarLabel']
+    calculator2Display.OSPRayScaleFunction = 'PiecewiseFunction'
+    calculator2Display.SelectOrientationVectors = 'velocity'
+    calculator2Display.ScaleFactor = 78305.2202328
+    calculator2Display.SelectScaleArray = EP4_params['fieldvarLabel']
+    calculator2Display.GlyphType = 'Arrow'
+    calculator2Display.GlyphTableIndexArray = EP4_params['fieldvarLabel']
+    calculator2Display.GaussianRadius = 3915.26101164
+    calculator2Display.SetScaleArray = ['POINTS', EP4_params['fieldvarLabel']]
+    calculator2Display.ScaleTransferFunction = 'PiecewiseFunction'
+    calculator2Display.OpacityArray = ['POINTS', EP4_params['fieldvarLabel']]
+    calculator2Display.OpacityTransferFunction = 'PiecewiseFunction'
+    calculator2Display.DataAxesGrid = 'GridAxesRepresentation'
+    calculator2Display.PolarAxes = 'PolarAxesRepresentation'
+    calculator2Display.ScalarOpacityFunction = resultPWF
+    calculator2Display.ScalarOpacityUnitDistance = 8702.97394169458
+    
+    # init the 'PiecewiseFunction' selected for 'ScaleTransferFunction'
+    calculator2Display.ScaleTransferFunction.Points = [-496.9883816539332, 0.0, 0.5, 0.0, 93.39501928085963, 1.0, 0.5, 0.0]
+    
+    # init the 'PiecewiseFunction' selected for 'OpacityTransferFunction'
+    calculator2Display.OpacityTransferFunction.Points = [-496.9883816539332, 0.0, 0.5, 0.0, 93.39501928085963, 1.0, 0.5, 0.0]
+    
+    # hide data in view
+    Hide(appendAttributes1, renderView1)
+    
+    # show color bar/color legend
+    calculator2Display.SetScalarBarVisibility(renderView1, True)
+    
+
+    # get color legend/bar for resultLUT in view renderView1
+    resultLUTColorBar = GetScalarBar(resultLUT, renderView1)
+    resultLUTColorBar.Title = EP4_params['fieldvarLabel']
+    resultLUTColorBar.ComponentTitle = ''
+    
+    # Properties modified on resultLUTColorBar
+    # (setting size, font etc for colorbar)
+    resultLUTColorBar.ScalarBarThickness = 10
+    resultLUTColorBar.ScalarBarLength = 0.2
+    resultLUTColorBar.AddRangeLabels = 0
+    resultLUTColorBar.TitleFontSize = EP4_params['fontSize']
+    resultLUTColorBar.LabelFontSize = EP4_params['fontSize']
+    # Set colorbar text to black
+    resultLUTColorBar.TitleColor = [0.0, 0.0, 0.0]
+    resultLUTColorBar.LabelColor = [0.0, 0.0, 0.0]
+
+    # update the view to ensure updated data information
+    renderView1.Update()
+    
+    # User defined value range
+    if 'fieldrange' in EP4_params.keys():
+        resultLUT.RescaleTransferFunction(EP4_params['fieldrange'])
+        resultPWF.RescaleTransferFunction(EP4_params['fieldrange'])
+        
+    return [calculator2, calculator2Display]
+
+
 
 def addVelContours(EP4_params,calculator1,renderView1):
     "Use contour filter to add velocity contours"
@@ -327,3 +427,8 @@ def plotField(EP4_params,renderView1,plottingSurface):
         fieldvarPWF.RescaleTransferFunction(EP4_params['fieldrange'])
         
     return [fieldvarLUTColorBar, fieldvarLUT, fieldvarPWF]
+
+
+
+
+
