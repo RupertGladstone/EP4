@@ -79,15 +79,16 @@ def EP4_plot(EP4_params):
     renderView1.CameraPosition = [EP4_params['camerax'], EP4_params['cameray'], EP4_params['cameraHeight']]
     renderView1.CameraFocalPoint = [EP4_params['camerax'], EP4_params['cameray'], 0.0]
     renderView1.CameraParallelScale = 459975.77514285187
-    
+ 
+    print('Saving screenshot '+EP4_params['imgname'])
+   
     # save screenshot
     SaveScreenshot(EP4_params['imgname'], renderView1, ImageResolution=[EP4_params['xres'],EP4_params['yres']])
     
-    # set active source
-    SetActiveSource(None)
-    
-    # set active view
-    SetActiveView(None)
+    # destroy renderView1
+    Delete(renderView1)
+    del renderView1
+
 
 
 
@@ -314,6 +315,11 @@ def calcChange(EP4_params,appendAttributes1,renderView1):
         resultLUT.RescaleTransferFunction(EP4_params['fieldrange'])
         resultPWF.RescaleTransferFunction(EP4_params['fieldrange'])
         
+    # Apply a preset using its name. Note this may not work as expected when presets have duplicate names.
+    if 'presetColor' in EP4_params.keys():
+        resultLUT.ApplyPreset(EP4_params['presetColor'], True)
+#        resultLUT.ApplyPreset(EP4_params['presetColor'], True)
+
     return [calculator2, calculator2Display]
 
 
@@ -425,7 +431,13 @@ def plotField(EP4_params,renderView1,plottingSurface):
     if 'fieldrange' in EP4_params.keys():
         fieldvarLUT.RescaleTransferFunction(EP4_params['fieldrange'])
         fieldvarPWF.RescaleTransferFunction(EP4_params['fieldrange'])
-        
+
+    # Apply a preset using its name. Note this may not work as expected when presets have duplicate names.
+    if 'presetColor' in EP4_params.keys():
+        fieldvarLUT.ApplyPreset(EP4_params['presetColor'], True)
+#        fieldvarLUT.ApplyPreset(EP4_params['presetColor'], True)
+
+
     return [fieldvarLUTColorBar, fieldvarLUT, fieldvarPWF]
 
 
